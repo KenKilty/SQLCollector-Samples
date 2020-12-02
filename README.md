@@ -29,7 +29,7 @@ Invoke-Sqlcmd -InputFile "$(System.DefaultWorkingDirectory)/CollectorSqlDb/publi
 
 ## SQL Collector - Subscription Architecture
 
-![Subscription Inventory Flow](resources\subsinventory.png)
+![Subscription Inventory Flow](\resources\subsinventory.png)
 
 A single user assigned managed identity is used for the following:
 
