@@ -6,4 +6,4 @@ pool:
 
 steps:
 - script: |
-    git push https://$(GITHUB_PAT)@github.com/KenKilty/SQLCollector-Samples.git head:refs/heads/main
+    git push https://$(GITHUB.PAT)@github.com/KenKilty/SQLCollector-Samples.git head:refs/heads/main
