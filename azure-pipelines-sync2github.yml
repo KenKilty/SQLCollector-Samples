@@ -2,7 +2,7 @@ trigger:
 - sync
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
 
 steps:
 - script: |
