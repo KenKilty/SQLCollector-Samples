@@ -1,0 +1,9 @@
+trigger:
+- sync
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- script: |
+    git push https://$(GITHUB_PAT)@github.com/KenKilty/SQLCollector-Samples.git head:refs/heads/main

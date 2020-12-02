@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "SQL Collector Root",
+			"path": "."
+		},
+		{
+			"name": "SQL Collector Database",
+			"path": "src\\CollectorSqlDb"
+		},
+		{
+			"name": "SQL Collector FunctionApp",
+			"path": "src\\CollectorFuncApp"
+		}
+	],
+	"settings": {}
+}
