@@ -21,6 +21,9 @@ namespace SqlCollectorDb.Data
 		public virtual DbSet<Subscription> Subscriptions { get; set; }
 		public virtual DbSet<SubscriptionHistory> SubscriptionHistories { get; set; }
 		public virtual DbSet<SubscriptionStage> SubscriptionStages { get; set; }
+		public virtual DbSet<SqlResource> SqlResources { get; set; }
+		public virtual DbSet<SqlResourceHistory> SqlResourceHistories { get; set; }
+		public virtual DbSet<SqlResourceStage> SqlResourceStages { get; set; }
 
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
@@ -75,6 +78,71 @@ namespace SqlCollectorDb.Data
 
 				entity.Property(e => e.Name)
 					.IsRequired()
+					.HasMaxLength(255)
+					.IsUnicode(false);
+			});
+
+			modelBuilder.Entity<SqlResource>(entity =>
+			{
+				entity.ToTable("SqlResource", "app");
+
+				entity.HasKey(e => e.Id);
+				entity.Property(e => e.Id).HasColumnName("ID");
+
+				entity.Property(e => e.ResourceId)
+					.ValueGeneratedNever()
+					.HasColumnName("ResourceId");
+
+				entity.Property(e => e.Name)
+					.IsRequired()
+					.HasMaxLength(255)
+					.IsUnicode(false);
+
+				entity.Property(e => e.AdminLogin)
+					.HasMaxLength(255)
+					.IsUnicode(false);
+			});
+
+			modelBuilder.Entity<SqlResourceHistory>(entity =>
+			{
+				entity.HasKey(e => e.HistoryId)
+					.HasName("PK_SqlResource");
+
+				entity.ToTable("SqlResourceHistory", "history");
+
+				entity.Property(e => e.HistoryId).HasColumnName("HistoryID");
+
+				entity.Property(e => e.ArchivedOn).HasDefaultValueSql("(sysutcdatetime())");
+
+				entity.Property(e => e.Id).HasColumnName("ID");
+
+				entity.Property(e => e.Name)
+					.IsRequired()
+					.HasMaxLength(255)
+					.IsUnicode(false);
+
+				entity.Property(e => e.AdminLogin)
+					.HasMaxLength(255)
+					.IsUnicode(false);
+			});
+
+			modelBuilder.Entity<SqlResourceStage>(entity =>
+			{
+				entity.ToTable("SqlResourceStage", "app");
+
+				entity.HasKey(e => e.Id);
+				entity.Property(e => e.Id).HasColumnName("ID");
+
+				entity.Property(e => e.ResourceId)
+					.ValueGeneratedNever()
+					.HasColumnName("ResourceId");
+
+				entity.Property(e => e.Name)
+					.IsRequired()
+					.HasMaxLength(255)
+					.IsUnicode(false);
+
+				entity.Property(e => e.AdminLogin)
 					.HasMaxLength(255)
 					.IsUnicode(false);
 			});

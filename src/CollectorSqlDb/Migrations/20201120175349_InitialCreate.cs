@@ -82,6 +82,86 @@ namespace SqlCollectorDb.Migrations
 					EXEC sp_executesql @uspSubscriptionStageUpsert";
 
 			migrationBuilder.Sql(uspSubscriptionStageUpsert);
+
+			
+			migrationBuilder.CreateTable(
+				name: "SqlResource",
+				schema: "app",
+				columns: table => new
+				{
+					ID = table.Column<int>(type: "int", nullable: false)
+						.Annotation("SqlServer:Identity", "1, 1"),
+					ResourceId = table.Column<Guid>(type: "varchar(255)", nullable: false),
+					Name = table.Column<string>(type: "varchar(255)", unicode: false, maxLength: 255, nullable: false),
+					AdminLogin = table.Column<string>(type: "varchar(255)", unicode: false, maxLength: 255, nullable: true),
+					CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+					LastSeenOn = table.Column<DateTime>(type: "datetime2", nullable: true)
+				},
+				constraints: table =>
+				{
+					table.PrimaryKey("PK_SqlResource", x => x.ID);
+				});
+
+			migrationBuilder.CreateTable(
+				name: "SqlResourceHistory",
+				schema: "history",
+				columns: table => new
+				{
+					HistoryID = table.Column<int>(type: "int", nullable: false)
+						.Annotation("SqlServer:Identity", "1, 1"),
+					ID = table.Column<Guid>(type: "int", nullable: false),
+					ResourceId = table.Column<Guid>(type: "varchar(255)", nullable: false),
+					Name = table.Column<string>(type: "varchar(255)", unicode: false, maxLength: 255, nullable: false),
+					AdminLogin = table.Column<string>(type: "varchar(255)", unicode: false, maxLength: 255, nullable: true),
+					CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+					LastSeenOn = table.Column<DateTime>(type: "datetime2", nullable: true),
+					ArchivedOn = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "(sysutcdatetime())")
+				},
+				constraints: table =>
+				{
+					table.PrimaryKey("PK_SqlResource", x => x.HistoryID);
+				});
+
+			migrationBuilder.CreateTable(
+				name: "SqlResourceStage",
+				schema: "app",
+				columns: table => new
+				{
+					ID = table.Column<int>(type: "int", nullable: false)
+						.Annotation("SqlServer:Identity", "1, 1"),
+					ResourceId = table.Column<Guid>(type: "varchar(255)", nullable: false),
+					Name = table.Column<string>(type: "varchar(255)", unicode: false, maxLength: 255, nullable: false),
+					AdminLogin = table.Column<string>(type: "varchar(255)", unicode: false, maxLength: 255, nullable: true),
+					CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+					LastSeenOn = table.Column<DateTime>(type: "datetime2", nullable: true)
+				},
+				constraints: table =>
+				{
+					table.PrimaryKey("PK_SqlResourceStage", x => x.ID);
+				});
+
+			string uspSqlResourceStageUpsert = @"
+					DECLARE @uspSqlResourceStageUpsert NVARCHAR(MAX) = N'
+					CREATE PROCEDURE [app].[uspSqlResourceStageUpsert] AS
+					INSERT INTO [history].[SqlResourceHistory]
+					SELECT [ID], [ResourceId], [Name], [AdminLogin], [CreatedOn], [LastSeenOn], [ArchivedOn]
+					FROM (
+						MERGE [app].[SqlResource] AS T
+						USING [app].[SqlResourceStage] AS S
+						ON T.[ID] = S.[ID]
+						WHEN NOT MATCHED BY TARGET
+							THEN INSERT([ResourceId],[Name],[AdminLogin],[CreatedOn],[LastSeenOn]) VALUES (S.[ResourceId],S.[Name],S.[AdminLogin],S.[CreatedOn],S.[LastSeenOn])
+						WHEN MATCHED
+							THEN UPDATE SET T.[ResourceId] = S.[ResourceId],
+									T.[Name] = S.[Name],
+									T.[AdminLogin] = S.[AdminLogin],
+									T.[CreatedOn] = S.[CreatedOn],
+									T.[LastSeenOn] = SYSUTCDATETIME()
+						OUTPUT $action, inserted.*, SYSUTCDATETIME() AS ArchivedOn) AS [Changes]([Action], [ID], [ResourceId], [Name], [AdminLogin], [CreatedOn], [LastSeenOn], [ArchivedOn])
+					WHERE [Action] = ''UPDATE'''
+					EXEC sp_executesql @uspSqlResourceStageUpsert";
+
+			migrationBuilder.Sql(uspSqlResourceStageUpsert);
 		}
 
 		protected override void Down(MigrationBuilder migrationBuilder)
@@ -99,6 +179,20 @@ namespace SqlCollectorDb.Migrations
 				schema: "app");
 
 			migrationBuilder.Sql("DROP PROCEDURE [app].[uspSubscriptionStageUpsert]");
+
+			migrationBuilder.DropTable(
+				name: "SqlResource",
+				schema: "app");
+
+			migrationBuilder.DropTable(
+				name: "SqlResourceHistory",
+				schema: "history");
+
+			migrationBuilder.DropTable(
+				name: "SqlResourceStage",
+				schema: "app");
+
+			migrationBuilder.Sql("DROP PROCEDURE [app].[uspSqlResourceStageUpsert]");
 		}
 	}
 }

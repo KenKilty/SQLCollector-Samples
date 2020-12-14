@@ -24,6 +24,7 @@ namespace SqlCollector.Functions
 		public async Task Run(
 			[TimerTrigger("%SubscriptionInventorySchedule%")] TimerInfo timerInfo,
 			[Table("InventorySubscription", Connection = "StorageConnectionAppSetting")] CloudTable inventorySubscription,
+			[Queue("outqueue"), StorageAccount("AzureWebJobsStorage")] ICollector<string> msg,
 			ILogger log)
 		{
 			log.LogInformation($"C# Timer trigger function executed at: {DateTime.UtcNow}. Next occurrence: {timerInfo.FormatNextOccurrences(1)}");
@@ -58,6 +59,8 @@ namespace SqlCollector.Functions
 					TableOperation mergeOperation = TableOperation.InsertOrMerge(subEntity);
 					await inventorySubscription.ExecuteAsync(mergeOperation);
 				}
+
+				msg.Add(sub.SubscriptionId);
 			}
 		}
 	}

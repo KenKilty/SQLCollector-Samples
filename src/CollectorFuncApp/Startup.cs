@@ -35,6 +35,33 @@ namespace SqlCollector
 					configuration
 					.GetSection("SubscriptionSyncConfiguration")
 					.Bind(subscriptionSyncSettings);
+				})
+				.Services
+				.AddScoped<ISqlResourceInventoryService, SqlResourceInventoryService>()
+				.AddOptions<SqlResourceInventoryConfiguration>()
+				.Configure<IConfiguration>((sqlResourceInventorySettings, configuration) =>
+				{
+					configuration
+					.GetSection("SqlResourceInventoryConfiguration")
+					.Bind(sqlResourceInventorySettings);
+				})
+				.Services
+				.AddScoped<ISqlResourceInfoInventoryService, SqlResourceInfoInventoryService>()
+				.AddOptions<SqlResourceInfoInventoryConfiguration>()
+				.Configure<IConfiguration>((sqlResourceInfoInventorySettings, configuration) =>
+				{
+					configuration
+					.GetSection("SqlResourceInfoInventoryConfiguration")
+					.Bind(sqlResourceInfoInventorySettings);
+				})
+				.Services
+				.AddScoped<ISqlResourceSyncService, SqlResourceSyncService>()
+				.AddOptions<SqlResourceSyncConfiguration>()
+				.Configure<IConfiguration>((sqlResourceSyncSettings, configuration) =>
+				{
+					configuration
+					.GetSection("SqlResourceSyncConfiguration")
+					.Bind(sqlResourceSyncSettings);
 				});
 		}
 	}
