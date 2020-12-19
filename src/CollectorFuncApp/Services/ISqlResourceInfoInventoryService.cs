@@ -8,5 +8,6 @@ namespace SqlCollector.Services
 	{
 		SqlResourceDto GetSqlServerResource(ResourceDto _sqlResource);
 		Task<SqlResourceDto> GetSqlServerResourceAsync(ResourceDto _sqlResource);
+		Task<SqlResourceDto> GetSqlVirtualMachineResourceAsync(ResourceDto _sqlResource); 
 	}
 }

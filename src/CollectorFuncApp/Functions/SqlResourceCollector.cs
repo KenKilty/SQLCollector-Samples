@@ -29,9 +29,12 @@ namespace CollectorFuncApp.Functions
 
 			IReadOnlyList<ResourceDto> resources = await _sqlResourceInventoryService.GetSqlResourcesAsync(input);
 
-			foreach (var res in resources)
+			if (resources != null)
 			{
-				msg.Add(res);
+				foreach (var res in resources)
+				{
+					msg.Add(res);
+				}
 			}
 		}
     }

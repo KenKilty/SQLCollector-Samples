@@ -62,6 +62,15 @@ namespace SqlCollector
 					configuration
 					.GetSection("SqlResourceSyncConfiguration")
 					.Bind(sqlResourceSyncSettings);
+				})
+				.Services
+				.AddScoped<ISqlResourceDatabaseSyncService, SqlResourceDatabaseSyncService>()
+				.AddOptions<SqlResourceDatabaseSyncConfiguration>()
+				.Configure<IConfiguration>((sqlResourceDatabaseSyncSettings, configuration) =>
+				{
+					configuration
+					.GetSection("SqlResourceDatabaseSyncConfiguration")
+					.Bind(sqlResourceDatabaseSyncSettings);
 				});
 		}
 	}

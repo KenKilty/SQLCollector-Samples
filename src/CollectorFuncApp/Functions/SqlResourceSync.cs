@@ -22,21 +22,21 @@ namespace SqlCollector.Functions
 		[FunctionName("SqlResourceSync")]
 		public async Task Run(
 			[TimerTrigger("%SqlResourceSyncSchedule%")] TimerInfo timerInfo,
-			[Table("InventorySqlResource", Connection = "StorageConnectionAppSetting")] CloudTable sqlInfoSubscription,
+			[Table("InventorySqlResource", Connection = "StorageConnectionAppSetting")] CloudTable sqlInfoTable,
 			ILogger log)
 		{
 			log.LogInformation($"C# Sql Resource Sync Timer trigger function executed at: {DateTime.UtcNow}. Next occurrence: {timerInfo.FormatNextOccurrences(1)}");
 
 			DataTable stageDataTable = new DataTable
 			{
-				Columns = { { "ID", typeof(int) }, { "ResourceId", typeof(string) }, { "Name", typeof(string) }, { "AdminLogin", typeof(string) }, { "CreatedOn", typeof(DateTime) }, { "LastSeenOn", typeof(DateTime) } }
+				Columns = { { "ID", typeof(int) }, { "ResourceId", typeof(string) }, { "Name", typeof(string) }, { "AdminLogin", typeof(string) }, { "Type", typeof(string) }, { "CreatedOn", typeof(DateTime) }, { "LastSeenOn", typeof(DateTime) } }
 			};
 			stageDataTable.PrimaryKey = new[] { stageDataTable.Columns[0] };
 
 			TableContinuationToken token = null;
 			do
 			{
-				TableQuerySegment<SqlResourceEntity> queryResult = await sqlInfoSubscription.ExecuteQuerySegmentedAsync(new TableQuery<SqlResourceEntity>(), token);
+				TableQuerySegment<SqlResourceEntity> queryResult = await sqlInfoTable.ExecuteQuerySegmentedAsync(new TableQuery<SqlResourceEntity>(), token);
 				int index = 1;
 
 				foreach (SqlResourceEntity result in queryResult)
@@ -50,9 +50,10 @@ namespace SqlCollector.Functions
 
 					DataRow row = stageDataTable.NewRow();
 					row["ID"] = index;
-					row["ResourceId"] = result.ServerName;
+					row["ResourceId"] = result.ServerNameId;
 					row["Name"] = result.RowKey;
 					row["AdminLogin"] = result.AdminLogin;
+					row["Type"] = result.Type;
 					row["CreatedOn"] = result.CreatedOn;
 					row["LastSeenOn"] = result.LastSeenOn;
 

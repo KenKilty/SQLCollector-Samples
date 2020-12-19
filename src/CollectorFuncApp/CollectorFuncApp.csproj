@@ -12,6 +12,7 @@
         <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.10.0-preview" />
         <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.36.1" />
         <PackageReference Include="Microsoft.Azure.Management.Sql.Fluent" Version="1.36.1" />
+        <PackageReference Include="Microsoft.Azure.Management.SqlVirtualMachine" Version="1.0.0" />
         <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="4.0.3" />
         <PackageReference Include="Microsoft.Data.SqlClient" Version="2.1.0" />
         <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.3" />

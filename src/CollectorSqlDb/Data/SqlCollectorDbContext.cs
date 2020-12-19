@@ -24,6 +24,9 @@ namespace SqlCollectorDb.Data
 		public virtual DbSet<SqlResource> SqlResources { get; set; }
 		public virtual DbSet<SqlResourceHistory> SqlResourceHistories { get; set; }
 		public virtual DbSet<SqlResourceStage> SqlResourceStages { get; set; }
+		public virtual DbSet<SqlResourceDatabase> SqlResourceDatabases { get; set; }
+		public virtual DbSet<SqlResourceDatabaseHistory> SqlResourceDatabaseHistories { get; set; }
+		public virtual DbSet<SqlResourceDatabaseStage> SqlResourceDatabaseStages { get; set; }
 
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
@@ -101,6 +104,10 @@ namespace SqlCollectorDb.Data
 				entity.Property(e => e.AdminLogin)
 					.HasMaxLength(255)
 					.IsUnicode(false);
+
+				entity.Property(e => e.Type)
+					.HasMaxLength(255)
+					.IsUnicode(false);
 			});
 
 			modelBuilder.Entity<SqlResourceHistory>(entity =>
@@ -124,6 +131,10 @@ namespace SqlCollectorDb.Data
 				entity.Property(e => e.AdminLogin)
 					.HasMaxLength(255)
 					.IsUnicode(false);
+
+				entity.Property(e => e.Type)
+					.HasMaxLength(255)
+					.IsUnicode(false);
 			});
 
 			modelBuilder.Entity<SqlResourceStage>(entity =>
@@ -143,6 +154,87 @@ namespace SqlCollectorDb.Data
 					.IsUnicode(false);
 
 				entity.Property(e => e.AdminLogin)
+					.HasMaxLength(255)
+					.IsUnicode(false);
+
+				entity.Property(e => e.Type)
+					.HasMaxLength(255)
+					.IsUnicode(false);
+			});
+
+			modelBuilder.Entity<SqlResourceDatabase>(entity =>
+			{
+				entity.ToTable("SqlResourceDatabase", "app");
+
+				entity.HasKey(e => e.Id);
+				entity.Property(e => e.Id).HasColumnName("ID");
+
+				entity.Property(e => e.ServerNameId)
+					.ValueGeneratedNever()
+					.HasColumnName("ServerNameId");
+
+				entity.Property(e => e.Name)
+					.IsRequired()
+					.HasMaxLength(255)
+					.IsUnicode(false);
+
+				entity.Property(e => e.ServerName)
+					.HasMaxLength(255)
+					.IsUnicode(false);
+
+				entity.Property(e => e.SubscriptionId)
+					.HasMaxLength(255)
+					.IsUnicode(false);
+			});
+
+			modelBuilder.Entity<SqlResourceDatabaseHistory>(entity =>
+			{
+				entity.HasKey(e => e.HistoryId)
+					.HasName("PK_SqlResourceDatabase");
+
+				entity.ToTable("SqlResourceDatabaseHistory", "history");
+
+				entity.Property(e => e.HistoryId).HasColumnName("HistoryID");
+
+				entity.Property(e => e.ArchivedOn).HasDefaultValueSql("(sysutcdatetime())");
+
+				entity.Property(e => e.Id).HasColumnName("ID");
+
+				entity.Property(e => e.Name)
+					.IsRequired()
+					.HasMaxLength(255)
+					.IsUnicode(false);
+
+				entity.Property(e => e.ServerName)
+					.HasMaxLength(255)
+					.IsUnicode(false);
+
+				entity.Property(e => e.SubscriptionId)
+					.HasMaxLength(255)
+					.IsUnicode(false);
+			});
+
+			modelBuilder.Entity<SqlResourceDatabaseStage>(entity =>
+			{
+				entity.ToTable("SqlResourceDatabaseStage", "app");
+
+				entity.HasKey(e => e.Id);
+				entity.Property(e => e.Id).HasColumnName("ID");
+
+				entity.Property(e => e.ServerNameId)
+					.ValueGeneratedNever()
+					.HasColumnName("ServerNameId");
+
+				entity.Property(e => e.Name)
+					.IsRequired()
+					.HasMaxLength(255)
+					.IsUnicode(false);
+
+				entity.Property(e => e.ServerName)
+					.HasMaxLength(255)
+					.IsUnicode(false);
+
+				entity.Property(e => e.SubscriptionId)
 					.HasMaxLength(255)
 					.IsUnicode(false);
 			});

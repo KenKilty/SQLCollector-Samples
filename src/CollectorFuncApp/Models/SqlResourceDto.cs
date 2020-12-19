@@ -10,6 +10,7 @@ namespace SqlCollector.Models
 		public string ServerName { get; set; }
 		public string SubscriptionId { get; set; }
 		public string AdminLogin { get; set; }
+		public string Type { get; set; }
 		public List<SqlServerDatabaseDto> Databases { get; set; }
 		public DateTime? CreatedOn { get; set; }
 

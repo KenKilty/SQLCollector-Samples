@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.ResourceManager.Models;
 using Microsoft.Azure.Management.Sql.Fluent;
+using Microsoft.Azure.Management.SqlVirtualMachine.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.Rest;
 using Microsoft.Rest.Azure;
@@ -66,6 +68,7 @@ namespace SqlCollector.Services
 								_sqlResource.tenantId,
 								AzureEnvironment.AzureGlobalCloud);
 
+
 			// Top level abstraction of Azure. https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.fluent.iazure?view=azure-dotnet
 			// .WithSubscription is optional if you wish to return resource beyond the scope of a single subscription.
 			IAzure azure = Microsoft.Azure.Management.Fluent.Azure
@@ -79,7 +82,6 @@ namespace SqlCollector.Services
 			// for data collection define IList<T> outside of these nested loops and add resources and sub resources
 			// of interest to collections.
 			ISqlServer server = await azure.SqlServers.GetByIdAsync(_sqlResource.id);
-
 			if (server != null)
 			{
 				SqlResourceDto newServer = new SqlResourceDto()
@@ -87,7 +89,8 @@ namespace SqlCollector.Services
 					ServerNameId = server.Id,
 					ServerName = server.Name,
 					SubscriptionId = _sqlResource.subscriptionId,
-					AdminLogin = server.AdministratorLogin
+					AdminLogin = server.AdministratorLogin,
+					Type = _sqlResource.type
 				};
 
 				IReadOnlyList<ISqlDatabase> databasess = await server.Databases.ListAsync();
@@ -98,11 +101,53 @@ namespace SqlCollector.Services
 						ServerNameId = server.Id,
 						DatabaseName = database.Name,
 						ServerName = server.Name,
+						SubscriptionId = _sqlResource.subscriptionId,
 						CreatedOn = database.CreationDate
 					};
 
 					newServer.Databases.Add(db);
 				}
+
+				return newServer;
+			}
+
+			return null;
+		}
+
+		public async Task<SqlResourceDto> GetSqlVirtualMachineResourceAsync(ResourceDto _sqlResource)
+		{
+			if (_sqlResource == null || _sqlResource == default(ResourceDto))
+			{
+				return null;
+			}
+
+			DefaultAzureCredential credential;
+			if (_sqlResourceInfoInventoryConfiguration.UseSystemAssignedManagedIdentity)
+			{
+				credential = new DefaultAzureCredential();
+			}
+			else
+			{
+				credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions { ManagedIdentityClientId = _sqlResourceInfoInventoryConfiguration.UserAssignedManagedIdentityClientId });
+			}
+
+			TokenRequestContext tokenRequestContext = new TokenRequestContext(new[] { Constants.AzureResourceManagerAPIDefaultScope });
+			AccessToken tokenRequestResult = await credential.GetTokenAsync(tokenRequestContext);
+			ServiceClientCredentials serviceClientCreds = new TokenCredentials(tokenRequestResult.Token);
+
+			Microsoft.Azure.Management.SqlVirtualMachine.SqlVirtualMachineManagementClient sqlClient = new Microsoft.Azure.Management.SqlVirtualMachine.SqlVirtualMachineManagementClient(serviceClientCreds);
+			sqlClient.SubscriptionId = _sqlResource.subscriptionId;
+			var response = await sqlClient.SqlVirtualMachines.GetWithHttpMessagesAsync(_sqlResource.resourceGroup, _sqlResource.name);
+			SqlVirtualMachineModel server = response.Body;
+			if (server != null)
+			{
+				SqlResourceDto newServer = new SqlResourceDto()
+				{
+					ServerNameId = server.Id,
+					ServerName = server.Name,
+					SubscriptionId = _sqlResource.subscriptionId,
+					Type = _sqlResource.type
+				};
 
 				return newServer;
 			}
