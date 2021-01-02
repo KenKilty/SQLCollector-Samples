@@ -116,8 +116,7 @@ The subscription employing [user assigned managed identity](https://docs.microso
 
 ## SQL Collector - Resource Inventory Architecture
 
-To be completed.
-![Subscription Inventory Flow](/resources/subsinventory.png)
+![Subscription Inventory Flow](/resources/resinventory.png)
 
 A single user assigned managed identity is used for the following:
 
