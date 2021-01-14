@@ -22,7 +22,7 @@ namespace CollectorFuncApp.Functions
 		[Singleton]
 		[FunctionName("SqlResourceInfoCollector")]
 		public async Task Run
-		([QueueTrigger("outsqlqueue")] ResourceDto input,
+		([QueueTrigger("outsqlqueue", Connection = "StorageConnectionAppSetting")] ResourceDto input,
 		[Table("InventorySqlResource", Connection = "StorageConnectionAppSetting")] CloudTable sqlInfoTable,
 		[Table("InventorySqlResourceDatabases", Connection = "StorageConnectionAppSetting")] CloudTable sqlDatabasesTable,
 		ILogger log)

@@ -24,7 +24,7 @@ namespace SqlCollector.Functions
 		public async Task Run(
 			[TimerTrigger("%SubscriptionInventorySchedule%")] TimerInfo timerInfo,
 			[Table("InventorySubscription", Connection = "StorageConnectionAppSetting")] CloudTable inventorySubscription,
-			[Queue("outqueue"), StorageAccount("StorageConnectionAppSetting")] ICollector<string> msg,
+			[Queue("outqueue", Connection = "StorageConnectionAppSetting")] ICollector<string> msg,
 			ILogger log)
 		{
 			log.LogInformation($"C# Timer trigger function executed at: {DateTime.UtcNow}. Next occurrence: {timerInfo.FormatNextOccurrences(1)}");
