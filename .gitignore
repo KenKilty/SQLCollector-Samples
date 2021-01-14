@@ -444,3 +444,4 @@ FodyWeavers.xsd
 /src/CollectorSqlDb/bin/*
 /src/CollectorSqlDb/obj/*
 /src/OverallSolution
+/src/CollectorFuncApp/Properties/ServiceDependencies

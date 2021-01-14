@@ -22,7 +22,7 @@ namespace CollectorFuncApp.Functions
 		[FunctionName("SqlResourceCollector")]
         public async Task Run
 		([QueueTrigger("outqueue")] string input,
-		[Queue("outsqlqueue"), StorageAccount("AzureWebJobsStorage")] ICollector<ResourceDto> msg,
+		[Queue("outsqlqueue"), StorageAccount("StorageConnectionAppSetting")] ICollector<ResourceDto> msg,
 		ILogger log)
         {
 			log.LogInformation($"C# Sql Resource Collector function executed at: {DateTime.UtcNow}.");
