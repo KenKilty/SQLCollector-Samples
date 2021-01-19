@@ -10,10 +10,10 @@ parameters:
 - name: buildConfiguration
   displayName: Build Configuration
   type: string
-  default: release
+  default: 'release'
   values:
-  - debug
-  - release
+  - 'debug'
+  - 'release'
 - name: azServiceConnection
   displayName: Target Azure Service Connection
   type: string

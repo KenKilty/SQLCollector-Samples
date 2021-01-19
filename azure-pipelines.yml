@@ -7,21 +7,14 @@ trigger:
     exclude:
       - README.md
 
-variables:
-  targetEnvironment: 'Prod'
-  buildConfiguration: 'release'
-  azServiceConnection: 'SQLCollectorSHA-UAMI'
-  functionAppName: 'sqlcollector-prod-fa'
-  targetSqlCollectorDb: 'sqlcollector-prod-sqlsvr.database.windows.net'
-
 name: SQL_Collector_$(BuildDefinitionName)_$(Build.SourceBranchName)_$(Date:yyyyMMdd).$(Rev:rr)
 
 stages:
 - template: /pipelines/stage_templates/setup.yml
   parameters:
-    targetEnvironment: $(variables.targetEnvironment)
-    buildConfiguration: $(variables.buildConfiguration)
-    azServiceConnection: $(variables.azServiceConnection)
+    targetEnvironment: 'Prod'
+    buildConfiguration: 'release'
+    azServiceConnection: 'SQLCollectorSHA-UAMI'
 
 - stage: build
   jobs:
@@ -32,9 +25,9 @@ stages:
  
 - template: /pipelines/stage_templates/deployFunction.yml
   parameters:
-    azServiceConnection: $(variables.azServiceConnection)
-    functionAppName: $(variables.functionAppName)
-    targetSqlCollectorDb: $(variables.targetSqlCollectorDb)
+    azServiceConnection: 'SQLCollectorSHA-UAMI'
+    functionAppName: 'sqlcollector-prod-fa'
+    targetSqlCollectorDb: 'sqlcollector-prod-sqlsvr.database.windows.net'
 
 - stage: configure
   dependsOn: deploy
