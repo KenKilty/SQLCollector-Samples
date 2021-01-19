@@ -19,6 +19,7 @@ parameters:
   type: string
   default: 'SQLCollectorSHA-UAMI'
 
+stages:
 - stage: setup
   displayName: 'Setup for ${{ parameters.targetEnvironment }}'
   variables:

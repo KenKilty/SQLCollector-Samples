@@ -11,6 +11,7 @@ parameters:
   type: stepList
   default: []
 
+jobs:
 - job: run_build
   pool:
     name: 'SQL Collector Self Hosted'

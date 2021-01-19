@@ -12,6 +12,7 @@ parameters:
   type: string
   default: 'sqlcollector-prod-sqlsvr.database.windows.net'
 
+stages:
 - stage: deploy
   dependsOn: build
   condition: succeeded()
