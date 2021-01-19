@@ -1,0 +1,183 @@
+trigger:
+  batch: true
+  branches:
+    include: [ 'main' ]
+    exclude:
+      - README.md
+
+name: SQL_Collector_$(Date:yyyyMMdd).$(Rev:rr)_$(Build.SourceBranchName)_$(Build.BuildId)
+
+pr: none
+
+parameters:
+- name: targetEnvironment
+  type: string
+  displayName: Target Environment
+  default: 'Prod'
+  values:
+  - 'Dev'
+  - 'Test'
+  - 'Prod'
+- name: debugLogging
+  type: boolean
+  displayName: Debug Logging Enabled?
+  default: false
+  values:
+  - true
+  - false
+- name: buildConfiguration
+  type: string
+  displayName: Build Configuration
+  default: release
+  values:
+  - debug
+  - release
+- name: azServiceConnection
+  type: string
+  displayName: Target Azure Service Connection
+  default: 'SQLCollectorSHA-UAMI'
+- name: functionName
+  type: string
+  displayName: Target functionApp name
+  default: 'sqlcollector-prod-fa'
+- name: targetSqlCollectorDb
+  type: string
+  displayName: Target Azure SQL SqlCollectorDb FQDN
+  default: 'sqlcollector-prod-sqlsvr.database.windows.net'
+
+variables:
+  System.Debug: ${{ parameters.debugLogging }}
+  workingDirectory: '$(System.DefaultWorkingDirectory)/src'
+  functionAppName: ${{ parameters.functionName }}
+  azServiceConnection: ${{ parameters.azServiceConnection }}
+  targetEnvironment: ${{ parameters.targetEnvironment }}
+  targetSqlCollectorDb: ${{ parameters.targetSqlCollectorDb }}
+
+stages:
+- stage: setup
+  displayName: 'Setup for ${{ variables.targetEnvironment }}'
+  variables:
+    Build.SyncSources: false
+  jobs:
+    - job: 'ShowRootVariables'
+      displayName: 'Show Root Variables'
+      pool:
+        name: 'SQL Collector Self Hosted'
+      steps:
+      - script: |
+          echo Parameters
+          echo   parameters.targetEnvironment = ${{ parameters.targetEnvironment }}
+          echo   parameters.buildConfiguration = ${{ parameters.buildConfiguration }}
+          echo   parameters.debugLogging = ${{ parameters.debugLogging }}
+          echo   parameters.azServiceConnection = ${{ parameters.azServiceConnection }}
+          echo Variables
+          echo   system.debug = $(system.debug)
+        displayName: Show relevant variables
+        workingDirectory: $(Agent.TempDirectory)
+    - job: 'ValidateAzureResourceManagerServiceConnection'
+      displayName: 'Validate Azure Resource Manager Service Connection'
+      pool:
+        name: 'SQL Collector Self Hosted'
+      steps:
+      - task: AzurePowerShell@4
+        displayName: Azure Pwsh Login Test
+        inputs:
+          azureSubscription: ${{ variables.azServiceConnection }}
+          ScriptType: InlineScript
+          Inline: |
+            Write-Host (Get-AzContext).Account
+          azurePowerShellVersion: LatestVersion
+          workingDirectory: '.'
+          pwsh: true
+      - task: AzureCLI@2
+        displayName: Azure CLI Login Test
+        inputs:
+          azureSubscription: ${{ variables.azServiceConnection }}
+          scriptType: pscore
+          scriptLocation: inlineScript
+          workingDirectory: '.'
+          inlineScript: |
+            az --version
+            az account show
+
+- stage: build
+  jobs:
+  - job: run_build
+    pool:
+      name: 'SQL Collector Self Hosted'
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: Build SQL Collector FunctionApp
+      inputs:
+        command: 'build'
+        projects: |
+          $(workingDirectory)/CollectorFuncApp/*.csproj
+        arguments: --output $(System.DefaultWorkingDirectory)/CollectorFuncApp/publish_output --configuration ${{ parameters.buildConfiguration }}
+    - task: ArchiveFiles@2
+      displayName: 'Archive SQL Collector FunctionApp'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/CollectorFuncApp/publish_output'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/CollectorFuncApp/CollectorFuncApp_Build$(Build.BuildId).zip
+        replaceExistingArchive: true
+    - publish: $(Build.ArtifactStagingDirectory)/CollectorFuncApp/CollectorFuncApp_Build$(Build.BuildId).zip
+      artifact: dropAzFunc
+    - task: DotNetCoreCLI@2
+      displayName: Build SQL Collector Db Migration Script
+      inputs:
+        command: 'custom'
+        custom: 'ef'
+        arguments: 'migrations script --project $(workingDirectory)/CollectorSqlDb/SqlCollectorDb.csproj --configuration ${{ parameters.buildConfiguration }} --idempotent --output $(System.DefaultWorkingDirectory)/CollectorSqlDb/publish_output/migrations.sql'
+        workingDirectory: '.'
+    - task: ArchiveFiles@2
+      displayName: 'Archive SQL Collector Db Migration Script'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/CollectorSqlDb/publish_output'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/CollectorSqlDb/CollectorSqlDb_Build$(Build.BuildId).zip
+        replaceExistingArchive: true
+    - publish: $(Build.ArtifactStagingDirectory)/CollectorSqlDb/CollectorSqlDb_Build$(Build.BuildId).zip
+      artifact: dropAzSqlMigration
+
+- stage: deploy
+  dependsOn: build
+  condition: succeeded()
+  jobs:
+  - deployment:
+    displayName: Deploy SQL Collector FunctionApp
+    environment: 'production'
+    pool:
+      name: 'SQL Collector Self Hosted'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureFunctionApp@1
+            displayName: 'Azure functions app deploy'
+            inputs:
+              azureSubscription: ${{ variables.azServiceConnection }}
+              appType: functionApp
+              appName: $(functionAppName)
+              package: '$(Pipeline.Workspace)/dropAzFunc/CollectorFuncApp_Build$(Build.BuildId).zip'
+          - task: AzurePowerShell@4
+            displayName: 'Azure SQL SqlCollectorDb database deploy'
+            inputs:
+              azureSubscription: ${{ variables.azServiceConnection }}
+              ScriptType: InlineScript
+              Inline: |
+                $access_token = (Get-AzAccessToken -ResourceUrl https://database.windows.net).Token
+                Invoke-Sqlcmd -InputFile "$(System.DefaultWorkingDirectory)/CollectorSqlDb/publish_output/migrations.sql" -ServerInstance $env:targetSqlCollectorDb -Database SqlCollectorDb -AccessToken $access_token
+              azurePowerShellVersion: LatestVersion
+              workingDirectory: '.'
+              pwsh: true
+
+- stage: configure
+  dependsOn: deploy
+  jobs:
+  - job: deploy_staging
+    pool:
+      name: 'SQL Collector Self Hosted'
+    steps:
+    - script: echo Staging
