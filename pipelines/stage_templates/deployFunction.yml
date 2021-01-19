@@ -1,0 +1,46 @@
+parameters:
+- name: azServiceConnection
+  displayName: Target Azure Service Connection
+  type: string
+  default: 'SQLCollectorSHA-UAMI'
+- name: functionAppName
+  displayName: Target functionApp name
+  type: string
+  default: 'sqlcollector-prod-fa'
+- name: targetSqlCollectorDb
+  displayName: Target Azure SQL SqlCollectorDb FQDN
+  type: string
+  default: 'sqlcollector-prod-sqlsvr.database.windows.net'
+
+- stage: deploy
+  dependsOn: build
+  condition: succeeded()
+  jobs:
+  - deployment:
+    displayName: Deploy SQL Collector FunctionApp
+    environment: 'production'
+    pool:
+      name: 'SQL Collector Self Hosted'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureFunctionApp@1
+            displayName: 'Azure functions app deploy'
+            inputs:
+              azureSubscription: ${{ variables.azServiceConnection }}
+              appType: functionApp
+              appName: $(functionAppName)
+              package: '$(Pipeline.Workspace)/dropAzFunc/CollectorFuncApp_Build$(Build.BuildId).zip'
+          - task: AzurePowerShell@4
+            displayName: 'Azure SQL SqlCollectorDb database deploy'
+            inputs:
+              azureSubscription: ${{ variables.azServiceConnection }}
+              ScriptType: InlineScript
+              Inline: |
+                $access_token = (Get-AzAccessToken -ResourceUrl https://database.windows.net).Token
+                Invoke-Sqlcmd -InputFile "$(System.DefaultWorkingDirectory)/CollectorSqlDb/publish_output/migrations.sql" -ServerInstance $env:targetSqlCollectorDb -Database SqlCollectorDb -AccessToken $access_token
+              azurePowerShellVersion: LatestVersion
+              workingDirectory: '.'
+              pwsh: true
+

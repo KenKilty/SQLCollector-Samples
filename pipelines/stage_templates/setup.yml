@@ -1,0 +1,60 @@
+parameters:
+- name: targetEnvironment
+  displayName: Target Environment
+  type: string
+  default: 'Prod'
+  values:
+  - 'Dev'
+  - 'Test'
+  - 'Prod'
+- name: buildConfiguration
+  displayName: Build Configuration
+  type: string
+  default: release
+  values:
+  - debug
+  - release
+- name: azServiceConnection
+  displayName: Target Azure Service Connection
+  type: string
+  default: 'SQLCollectorSHA-UAMI'
+
+- stage: setup
+  displayName: 'Setup for ${{ parameters.targetEnvironment }}'
+  variables:
+    Build.SyncSources: false
+  jobs:
+    - job: 'ValidateAzureResourceManagerServiceConnection'
+      displayName: 'Validate Azure Resource Manager Service Connection'
+      pool:
+        name: 'SQL Collector Self Hosted'
+      steps:
+      - script: |
+          echo Parameters
+          echo   parameters.targetEnvironment = ${{ parameters.targetEnvironment }}
+          echo   parameters.buildConfiguration = ${{ parameters.buildConfiguration }}
+          echo   parameters.azServiceConnection = ${{ parameters.azServiceConnection }}
+          echo Variables
+          echo   system.debug = $(system.debug)
+        displayName: Show relevant variables
+        workingDirectory: $(Agent.TempDirectory)
+      - task: AzurePowerShell@4
+        displayName: Azure Pwsh Login Test
+        inputs:
+          azureSubscription: ${{ parameters.azServiceConnection }}
+          ScriptType: InlineScript
+          Inline: |
+            Write-Host (Get-AzContext).Account
+          azurePowerShellVersion: LatestVersion
+          workingDirectory: '.'
+          pwsh: true
+      - task: AzureCLI@2
+        displayName: Azure CLI Login Test
+        inputs:
+          azureSubscription: ${{ parameters.azServiceConnection }}
+          scriptType: pscore
+          scriptLocation: inlineScript
+          workingDirectory: '.'
+          inlineScript: |
+            az --version
+            az account show
