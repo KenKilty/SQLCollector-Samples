@@ -6,8 +6,7 @@ parameters:
   values:
   - 'debug'
   - 'release'
-- name: parameters.preBuildSteps
-  displayName: Pre-build steps
+- name: preBuildSteps
   type: stepList
   default: []
 
