@@ -21,7 +21,7 @@ jobs:
     inputs:
       command: 'build'
       projects: |
-        $(workingDirectory)/CollectorFuncApp/*.csproj
+        $(System.DefaultWorkingDirectory)/src/CollectorFuncApp/*.csproj
       arguments: --output $(System.DefaultWorkingDirectory)/CollectorFuncApp/publish_output --configuration ${{ parameters.buildConfiguration }}
   - task: ArchiveFiles@2
     displayName: 'Archive SQL Collector FunctionApp'
@@ -38,7 +38,7 @@ jobs:
     inputs:
       command: 'custom'
       custom: 'ef'
-      arguments: 'migrations script --project $(workingDirectory)/CollectorSqlDb/SqlCollectorDb.csproj --configuration ${{ parameters.buildConfiguration }} --idempotent --output $(System.DefaultWorkingDirectory)/CollectorSqlDb/publish_output/migrations.sql'
+      arguments: 'migrations script --project $(System.DefaultWorkingDirectory)/src/CollectorSqlDb/SqlCollectorDb.csproj --configuration ${{ parameters.buildConfiguration }} --idempotent --output $(System.DefaultWorkingDirectory)/CollectorSqlDb/publish_output/migrations.sql'
       workingDirectory: '.'
   - task: ArchiveFiles@2
     displayName: 'Archive SQL Collector Db Migration Script'
