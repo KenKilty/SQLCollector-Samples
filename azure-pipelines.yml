@@ -20,7 +20,7 @@ stages:
   jobs:
   - template: /pipelines/job_templates/build.yml
     parameters:
-      parameters.preBuildSteps: []
+      preBuildSteps: []
       buildConfiguration: 'release'
  
 - template: /pipelines/stage_templates/deployFunction.yml
