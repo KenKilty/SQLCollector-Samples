@@ -29,14 +29,14 @@ stages:
           - task: AzureFunctionApp@1
             displayName: 'Azure functions app deploy'
             inputs:
-              azureSubscription: ${{ variables.azServiceConnection }}
+              azureSubscription: ${{ parameters.azServiceConnection }}
               appType: functionApp
               appName: $(functionAppName)
               package: '$(Pipeline.Workspace)/dropAzFunc/CollectorFuncApp_Build$(Build.BuildId).zip'
           - task: AzurePowerShell@4
             displayName: 'Azure SQL SqlCollectorDb database deploy'
             inputs:
-              azureSubscription: ${{ variables.azServiceConnection }}
+              azureSubscription: ${{ parameters.azServiceConnection }}
               ScriptType: InlineScript
               Inline: |
                 $access_token = (Get-AzAccessToken -ResourceUrl https://database.windows.net).Token
