@@ -31,7 +31,7 @@ stages:
             inputs:
               azureSubscription: ${{ parameters.azServiceConnection }}
               appType: functionApp
-              appName: $(functionAppName)
+              appName: ${{ parameters.functionAppName }}
               package: '$(Pipeline.Workspace)/dropAzFunc/CollectorFuncApp_Build$(Build.BuildId).zip'
           - task: AzurePowerShell@4
             displayName: 'Azure SQL SqlCollectorDb database deploy'
