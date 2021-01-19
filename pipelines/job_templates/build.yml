@@ -1,0 +1,52 @@
+parameters:
+- name: buildConfiguration
+  displayName: Build Configuration
+  type: string
+  default: 'release'
+  values:
+  - 'debug'
+  - 'release'
+- name: parameters.preBuildSteps
+  displayName: Pre-build steps
+  type: stepList
+  default: []
+
+- job: run_build
+  pool:
+    name: 'SQL Collector Self Hosted'
+  steps:
+  - ${{ parameters.preBuildSteps }}
+  - task: DotNetCoreCLI@2
+    displayName: Build SQL Collector FunctionApp
+    inputs:
+      command: 'build'
+      projects: |
+        $(workingDirectory)/CollectorFuncApp/*.csproj
+      arguments: --output $(System.DefaultWorkingDirectory)/CollectorFuncApp/publish_output --configuration ${{ parameters.buildConfiguration }}
+  - task: ArchiveFiles@2
+    displayName: 'Archive SQL Collector FunctionApp'
+    inputs:
+      rootFolderOrFile: '$(System.DefaultWorkingDirectory)/CollectorFuncApp/publish_output'
+      includeRootFolder: false
+      archiveType: zip
+      archiveFile: $(Build.ArtifactStagingDirectory)/CollectorFuncApp/CollectorFuncApp_Build$(Build.BuildId).zip
+      replaceExistingArchive: true
+  - publish: $(Build.ArtifactStagingDirectory)/CollectorFuncApp/CollectorFuncApp_Build$(Build.BuildId).zip
+    artifact: dropAzFunc
+  - task: DotNetCoreCLI@2
+    displayName: Build SQL Collector Db Migration Script
+    inputs:
+      command: 'custom'
+      custom: 'ef'
+      arguments: 'migrations script --project $(workingDirectory)/CollectorSqlDb/SqlCollectorDb.csproj --configuration ${{ parameters.buildConfiguration }} --idempotent --output $(System.DefaultWorkingDirectory)/CollectorSqlDb/publish_output/migrations.sql'
+      workingDirectory: '.'
+  - task: ArchiveFiles@2
+    displayName: 'Archive SQL Collector Db Migration Script'
+    inputs:
+      rootFolderOrFile: '$(System.DefaultWorkingDirectory)/CollectorSqlDb/publish_output'
+      includeRootFolder: false
+      archiveType: zip
+      archiveFile: $(Build.ArtifactStagingDirectory)/CollectorSqlDb/CollectorSqlDb_Build$(Build.BuildId).zip
+      replaceExistingArchive: true
+  - publish: $(Build.ArtifactStagingDirectory)/CollectorSqlDb/CollectorSqlDb_Build$(Build.BuildId).zip
+    artifact: dropAzSqlMigration

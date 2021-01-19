@@ -1,0 +1,46 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - 'main'
+  paths:
+    exclude:
+      - README.md
+
+variables:
+  targetEnvironment: 'Prod'
+  buildConfiguration: 'release'
+  azServiceConnection: 'SQLCollectorSHA-UAMI'
+  functionAppName: 'sqlcollector-prod-fa'
+  targetSqlCollectorDb: 'sqlcollector-prod-sqlsvr.database.windows.net'
+
+name: SQL_Collector_$(BuildDefinitionName)_$(Build.SourceBranchName)_$(Date:yyyyMMdd).$(Rev:rr)
+
+stages:
+- template: /pipelines/stage_templates/setup.yml
+  parameters:
+    targetEnvironment: $(variables.targetEnvironment)
+    buildConfiguration: $(variables.buildConfiguration)
+    azServiceConnection: $(variables.azServiceConnection)
+
+- stage: build
+  jobs:
+  - template: /pipelines/job_templates/build.yml
+    parameters:
+      parameters.preBuildSteps: []
+      buildConfiguration: 'release'
+ 
+- template: /pipelines/stage_templates/deploy.yml
+  parameters:
+    azServiceConnection: $(variables.azServiceConnection)
+    functionAppName: $(variables.functionAppName)
+    targetSqlCollectorDb: $(variables.targetSqlCollectorDb)
+
+- stage: configure
+  dependsOn: deploy
+  jobs:
+  - job: deploy_staging
+    pool:
+      name: 'SQL Collector Self Hosted'
+    steps:
+    - script: echo Staging
